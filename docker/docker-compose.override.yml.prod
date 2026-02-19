@@ -1,0 +1,16 @@
+services:
+  acme-companion:
+    image: nginxproxy/acme-companion
+    container_name: automationapp-acme-companion
+    restart: unless-stopped
+    depends_on:
+      - nginx-proxy
+    volumes_from:
+      - nginx-proxy
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - automationapp_certs:/etc/nginx/certs:rw
+    environment:
+      DEFAULT_EMAIL: ${LETSENCRYPT_EMAIL}
+    networks:
+      - automationapp-net

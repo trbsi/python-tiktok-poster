@@ -1,0 +1,138 @@
+services:
+  nginx-proxy:
+    image: jwilder/nginx-proxy
+    container_name: automationapp-nginx-proxy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+      - automationapp_certs:/etc/nginx/certs:ro
+      - ./nginx/vhost:/etc/nginx/vhost.d
+      - ./nginx/html:/usr/share/nginx/html
+      - ./nginx/my_custom_proxy_settings.conf:/etc/nginx/conf.d/my_custom_proxy_settings.conf
+      - ../assets:/usr/share/nginx/assets # to be able to access assets via /static url (see ./vhost/mydomain.con)
+    networks: [ automationapp-net ]
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  django:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: automationapp-django
+    restart: unless-stopped
+    environment:
+      VIRTUAL_HOST: ${DJANGO_HOST}
+      LETSENCRYPT_HOST: ${LETSENCRYPT_HOST}
+      LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL}
+      DATABASE_HOST: mysql
+      VIRTUAL_PORT: 8000
+      REDIS_URL: redis://redis:6379/0
+      DJANGO_SETTINGS_MODULE: automationapp.settings
+      CELERY_BROKER_URL: redis://redis:6379/0
+    volumes:
+      - ../:/app
+      - automationapp_media:/app/media
+    working_dir: /app
+    depends_on: [ mysql, redis ]
+    command: poetry run gunicorn automationapp.wsgi:application -b 0.0.0.0:8000 --workers 5 --reload
+    expose: [ "8000" ]
+    networks: [ automationapp-net ]
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: automationapp-phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_HOST: mysql
+      VIRTUAL_HOST: ${PMA_HOST_DOMAIN}
+      LETSENCRYPT_HOST: ${LETSENCRYPT_HOST_PMA}
+      LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL}
+    depends_on: [ mysql ]
+    networks: [ automationapp-net ]
+
+  mysql:
+    image: mysql:8
+    container_name: automationapp-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - automationapp_mysql_data:/var/lib/mysql
+    networks: [ automationapp-net ]
+
+  redis:
+    image: redis:7-alpine
+    container_name: automationapp-redis
+    restart: unless-stopped
+    volumes:
+      - automationapp_redis_data:/data
+    networks: [ automationapp-net ]
+
+  celery-worker:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: automationapp-celery-worker
+    restart: unless-stopped
+    environment:
+      CELERY_BROKER_URL: redis://redis:6379/0
+      DJANGO_SETTINGS_MODULE: automationapp.settings
+    volumes:
+      - ../:/app
+      - automationapp_media:/app/media
+    depends_on: [ redis, django ]
+    command: poetry run celery -A automationapp worker --loglevel=info --autoscale=8,2
+    networks: [ automationapp-net ]
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  celery-beat:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: automationapp-celery-beat
+    restart: unless-stopped
+    environment:
+      CELERY_BROKER_URL: redis://redis:6379/0
+      DJANGO_SETTINGS_MODULE: automationapp.settings
+      CELERY_BEAT_SCHEDULER: django_celery_beat.schedulers:DatabaseScheduler
+    volumes:
+      - ../:/app
+      - automationapp_media:/app/media
+    depends_on: [ redis, django, mysql ]
+    command: poetry run celery -A automationapp beat --loglevel=debug
+    networks: [ automationapp-net ]
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  automationapp-net:
+    driver: bridge
+
+volumes:
+  automationapp_mysql_data:
+  automationapp_redis_data:
+  automationapp_media:
+  automationapp_certificates:
+  automationapp_certs:
+

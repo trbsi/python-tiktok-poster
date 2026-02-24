@@ -7,3 +7,12 @@ location /static/ {
     # Try to serve the file directly, if not found continue to app
     try_files $uri $uri/ =404;
 }
+
+location /media/ {
+    alias /app/media;
+    expires 30d;
+    add_header Cache-Control "public, immutable";
+
+    # Try to serve the file directly, if not found continue to app
+    try_files $uri $uri/ =404;
+}

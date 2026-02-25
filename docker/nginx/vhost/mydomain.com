@@ -9,7 +9,7 @@ location /static/ {
 }
 
 location /media/ {
-    alias /app/media;
+    alias /app/media/;
     expires 30d;
     add_header Cache-Control "public, immutable";
 

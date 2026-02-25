@@ -8,7 +8,7 @@ from src.user.models import User
 class UploadFileService():
     def upload_file(self, user: User, file: UploadedFile, data: dict):
         fs = FileSystemStorage()
-        path = user.id + '/' + file.name
+        path = f'{user.id}/{file.name}'
         file_name = fs.save(path, file)
         mime_type = file.content_type
         main_type = mime_type.split("/")[0]

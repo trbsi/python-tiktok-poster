@@ -88,7 +88,7 @@ class TikTokUploadFileService:
         """
         tiktok_username = content.site_username
         file_path = content.get_file_path()
-        url = "https://open.tiktokapis.com/v2/post/publish/inbox/video/init/"
+        url = "https://open.tiktokapis.com/v2/post/publish/video/init/"
         size_bytes = os.path.getsize(file_path)
 
         headers = {
@@ -97,6 +97,10 @@ class TikTokUploadFileService:
         }
 
         payload = {
+            "post_info": {
+                "title": content.content,
+                "privacy_level": "PUBLIC_TO_EVERYONE",
+            },
             "source_info": {
                 "source": "FILE_UPLOAD",
                 "video_size": size_bytes,

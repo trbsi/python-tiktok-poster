@@ -14,7 +14,8 @@
 
         {% for post in posts %}
         <div class="bg-white rounded-2xl shadow p-6 space-y-4">
-
+            Status: ({{post.id}}) {{post.status}} - {{post.scheduled_at}}
+            <hr>
             <form method="post" enctype="multipart/form-data" action="{% url 'media.edit' %}">
                 {% csrf_token %}
 
@@ -36,12 +37,12 @@
                 <!-- Social Account -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Account Username</label>
-                    <select name="social_account"
+                    <select name="social_account_id"
                             class="w-full border rounded-lg px-3 py-2" required>
                         <option value="">Select account</option>
                         {% for account in social_accounts %}
                         <option value="{{ account.id }}"
-                                {% if post.user.id == account.id %}selected{% endif %}>
+                                {% if post.social_account.id == account.id %}selected{% endif %}>
                             [{{account.site}}] {{ account.username }}
                         </option>
                         {% endfor %}
@@ -72,8 +73,7 @@
                     <select name="timezone"
                             class="w-full border rounded-lg px-3 py-2">
                         {% for tz in timezones %}
-                        <option value="{{ tz }}"
-                                {% if post.timezone == tz %}selected{% endif %}>
+                        <option value="{{ tz }}" {% if post.timezone == tz.zone %}selected{% endif %}>
                             {{ tz }}
                         </option>
                         {% endfor %}

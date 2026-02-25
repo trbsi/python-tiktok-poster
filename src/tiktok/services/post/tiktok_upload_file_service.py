@@ -22,7 +22,7 @@ class TikTokUploadFileService:
         url = "https://open.tiktokapis.com/v2/post/publish/inbox/video/init/"
 
         headers = {
-            "Authorization": "Bearer " + get_access_token(content.site_username),
+            "Authorization": "Bearer " + get_access_token(content.social_account.username),
             "Content-Type": "application/json",
         }
 
@@ -79,7 +79,7 @@ class TikTokUploadFileService:
         with open(file_path, "rb") as file:
             response = requests.put(data['upload_url'], headers=headers, data=file, proxies=proxies)
 
-        print(response.json())
+        print('UPLOAD VIDEO:', response.json())
 
     def _get_upload_url(self, content: PostContent):
         """
@@ -96,7 +96,7 @@ class TikTokUploadFileService:
              }
         }
         """
-        tiktok_username = content.site_username
+        tiktok_username = content.social_account.username
         file_path = content.get_file_path()
         url = "https://open.tiktokapis.com/v2/post/publish/video/init/"
         size_bytes = os.path.getsize(file_path)
@@ -109,7 +109,7 @@ class TikTokUploadFileService:
         payload = {
             "post_info": {
                 "title": content.content,
-                "privacy_level": "PUBLIC_TO_EVERYONE",
+                "privacy_level": "SELF_ONLY",  # "PUBLIC_TO_EVERYONE",
             },
             "source_info": {
                 "source": "FILE_UPLOAD",
@@ -128,5 +128,6 @@ class TikTokUploadFileService:
 
         response = requests.post(url, headers=headers, json=payload, proxies=proxies)
         result = response.json()
+        print('UPLOAD URL:', result)
 
         return result['data']

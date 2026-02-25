@@ -4,7 +4,7 @@ from django.core.files.storage import FileSystemStorage
 from django.core.files.uploadedfile import UploadedFile
 from django.shortcuts import get_object_or_404
 
-from src.media.models import PostContent
+from src.media.models import PostContent, SocialAccount
 from src.user.models import User
 
 
@@ -24,16 +24,19 @@ class UpdateMediaService():
                     os.remove(path)
             post.delete()
         else:
-            post.content_type = data.get("content_type")
             post.site = data.get("site")
-            post.site_username = data.get("site_username")
+            post.social_account = SocialAccount.objects.get(id=data.get("social_account_id"))
             post.title = data.get("title")
             post.content = data.get("content")
             post.timezone = data.get("timezone")
-            post.status = data.get("status")
 
             if file:
                 fs = FileSystemStorage()
-                post.file_name = fs.save(file.name, file)
+                path = f'{user.id}/{file.name}'
+                file_name = fs.save(path, file)
+                mime_type = file.content_type
+                main_type = mime_type.split("/")[0]
+                post.file_name = file_name
+                post.content_type = main_type
 
             post.save()

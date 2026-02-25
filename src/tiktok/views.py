@@ -29,7 +29,7 @@ def auth_redirect_from_tiktok(request: HttpRequest):
     authorization_code = request.GET.get('code')
     service = TikTokOAuthService()
     service.save_oauth_data(user, authorization_code)
-    return reverse_lazy('tiktok.accounts')
+    return redirect(reverse_lazy('tiktok.accounts'))
 
 
 def tiktok_accounts(request):

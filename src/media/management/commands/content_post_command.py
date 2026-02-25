@@ -1,16 +1,15 @@
-from datetime import datetime, time, timezone
+from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 
 from django.db.models import QuerySet
 
+from automationapp import settings
 from src.core.management.commands.base_command import BaseCommand
 from src.media.models import PostContent
 from src.tiktok.services.post.tiktok_poster_service import TikTokPostService
 
 
-class ContentPostCommand(BaseCommand):
-    POST_START = time(17, 0)
-    POST_END = time(21, 0)
+class Command(BaseCommand):
 
     def handle(self, *args, **options):
         tiktok = TikTokPostService()
@@ -23,11 +22,9 @@ class ContentPostCommand(BaseCommand):
 
         for single_content in content:
             local_time = now_utc.astimezone(ZoneInfo(single_content.timezone))
-            if not (self.POST_START <= local_time.time() <= self.POST_END):
-                continue
+            scheduled_local = single_content.scheduled_at.astimezone(ZoneInfo(single_content.timezone))
 
-            day = local_time.day
-            if (day % 2 == 0 and local_time.hour >= 19) or (day % 2 != 0 and local_time.hour <= 19):
+            if settings.APP_ENV == 'production' and not (local_time >= scheduled_local):
                 continue
 
             if single_content.is_tiktok():
@@ -37,6 +34,7 @@ class ContentPostCommand(BaseCommand):
             else:
                 continue
 
+            print('Content id: ', single_content.id)
             single_content.status = PostContent.STATUS_UPLOADED
             single_content.save()
 

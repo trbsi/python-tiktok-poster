@@ -10,7 +10,7 @@ class TikTokPostService:
         self.refresh_token_service = TikTokRefreshTokenService()
 
     def post_content(self, content: PostContent):
-        tiktok_username = content.site_username
+        tiktok_username = content.social_account.username
         access_token = get_access_token(tiktok_username)
         if not access_token:
             self.refresh_token_service.refresh_token(tiktok_username)

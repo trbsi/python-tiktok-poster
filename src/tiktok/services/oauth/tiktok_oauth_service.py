@@ -42,7 +42,9 @@ class TikTokOAuthService:
 
         tiktok_username = self._get_user_data(result)
 
-        tiktok_model = SocialAccount()
+        tiktok_model = SocialAccount.objects.filter(username=tiktok_username).filter(user=user).first()
+        if not tiktok_model:
+            tiktok_model = SocialAccount()
         tiktok_model.user = user
         tiktok_model.username = tiktok_username
         tiktok_model.site = SocialAccount.TIKTOK
@@ -63,5 +65,5 @@ class TikTokOAuthService:
 
         result = response.json()
         print(result)
-        
+
         return result['data']['user']['username']

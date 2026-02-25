@@ -189,6 +189,13 @@ if env('DB_ENGINE') == 'mysql':
             "LOCATION": "redis://redis:6379",
         }
     }
+else:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.filebased.FileBasedCache",
+            "LOCATION": "/var/tmp/cache",
+        }
+    }
 
 # Auth
 ACCOUNT_EMAIL_VERIFICATION = 'none'

@@ -4,6 +4,14 @@ from automationapp import settings
 from src.user.models import User
 
 
+class SocialAccount(models.Model):
+    TIKTOK = 'tiktok'
+    id = models.AutoField(primary_key=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    username = models.CharField(max_length=100)
+    site = models.CharField(max_length=20)  # tiktok, facebook
+
+
 class PostContent(models.Model):
     STATUS_UPLOADED = 'uploaded'
     STATUS_NONE = 'none'
@@ -14,13 +22,14 @@ class PostContent(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     content_type = models.CharField(max_length=20)  # video, image
     site = models.CharField(max_length=20)  # tiktok, facebook, all
-    site_username = models.CharField(max_length=50)
+    social_account = models.ForeignKey(SocialAccount, on_delete=models.CASCADE)
     title = models.CharField(max_length=100, null=True, blank=True)
     content = models.TextField()
     file_name = models.CharField(max_length=50)
     timezone = models.CharField(max_length=50)
     status = models.CharField(max_length=20)
-    group = models.CharField(max_length=50,blank=True, null=True)
+    group = models.CharField(max_length=50, blank=True, null=True)
+    scheduled_at = models.DateTimeField()
 
     objects = models.Manager()
 
@@ -47,11 +56,3 @@ class PostContent(models.Model):
 
     def is_video(self):
         return self.content_type == 'video'
-
-
-class SocialAccount(models.Model):
-    TIKTOK = 'tiktok'
-    id = models.AutoField(primary_key=True)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    username = models.CharField(max_length=100)
-    site = models.CharField(max_length=20)  # tiktok, facebook

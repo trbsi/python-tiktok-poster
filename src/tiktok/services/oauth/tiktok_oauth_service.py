@@ -7,7 +7,7 @@ from src.user.models import User
 
 
 class TikTokOAuthService:
-    def save_oauth_data(self, user: User, authorization_code: str, tiktok_username: str):
+    def save_oauth_data(self, user: User, authorization_code: str):
         """
         https://developers.tiktok.com/doc/oauth-user-access-token-management?enter_method=left_navigation
         {
@@ -26,10 +26,7 @@ class TikTokOAuthService:
             "client_secret": settings.TIKTOK_CLIENT_SECRET,
             "code": authorization_code,
             "grant_type": "authorization_code",
-            "redirect_uri": full_url_for_route(
-                'tiktok.auth_redirect_from_tiktok',
-                query_params={'tiktok_username': tiktok_username}
-            ),
+            "redirect_uri": full_url_for_route('tiktok.auth_redirect_from_tiktok'),
         }
 
         headers = {
@@ -41,6 +38,9 @@ class TikTokOAuthService:
             'https://open.tiktokapis.com/v2/oauth/token/', data=payload, headers=headers
         )
         result = response.json()
+        print(result)
+
+        tiktok_username = self._get_user_data(result)
 
         tiktok_model = SocialAccount()
         tiktok_model.user = user
@@ -49,3 +49,19 @@ class TikTokOAuthService:
         tiktok_model.save()
 
         save_to_cache(result, tiktok_username)
+
+    # https://developers.tiktok.com/doc/tiktok-api-v2-get-user-info
+    def _get_user_data(self, result: dict) -> str:
+        headers = {
+            "Authorization": "Bearer " + result['access_token'],
+            "Content-Type": "application/json",
+        }
+        response = requests.get(
+            'https://open.tiktokapis.com/v2/user/info/?fields=username',
+            headers=headers
+        )
+
+        result = response.json()
+        print(result)
+        
+        return result['data']['user']['username']

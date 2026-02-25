@@ -51,7 +51,7 @@ class TikTokUploadFileService:
         response = requests.post(url, headers=headers, json=payload, proxies=proxies)
         print(response.json())
 
-    def _get_files(self, content:PostContent)->list:
+    def _get_files(self, content: PostContent) -> list:
         if not content.group:
             return [content.get_file_url()]
 
@@ -83,6 +83,7 @@ class TikTokUploadFileService:
 
     def _get_upload_url(self, content: PostContent):
         """
+        https://developers.tiktok.com/doc/content-posting-api-reference-direct-post?enter_method=left_navigation
         {
             "data": {
                 "publish_id": "v_inbox_file~v2.123456789",
